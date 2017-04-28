@@ -1,9 +1,15 @@
 <html>
 <body>
+    <div class="Menu">
+        <ul>
+            <li><a href="#" onclick="stop();">Stop</a></li>
+            <li>Points: <span class="points">0</span></li>
+        </ul>
+    </div>
 <canvas id="canvas" width="800" height="600"></canvas>
 
 <script>
-
+    var pointsCounter = 0;
     var canvas = document.getElementById('canvas');
     var ctx = canvas.getContext('2d');
     function plot(x,y,size,color) {
@@ -37,7 +43,8 @@
         var dest = points[Math.random()*3|0];
         voyager.x = (dest.x + voyager.x)/2;
         voyager.y = (dest.y + voyager.y)/2;
-        plot(voyager.x,voyager.y,1,"#0000FF")
+        plot(voyager.x,voyager.y,1,"#0000FF");
+        pointsCounter++;
     }
 
 
@@ -48,15 +55,20 @@
         points.forEach(function(point) {
             plot(point.x,point.y,5);
         });
-
+        document.getElementsByClassName('points')[0].innerHTML = pointsCounter;
     }
 
 
-    setInterval(
+    var thread = setInterval(
         function() {
             superVoyage();
         },1
     );
+
+
+    function stop() {
+        clearInterval(thread);
+    }
 
 
 </script>
