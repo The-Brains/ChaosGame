@@ -50,9 +50,71 @@ function stop() {
 }
 
 function clearCanvas() {
+    pointsCounter = 0
     ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     ctx.fill();
+}
+
+function onPoint(x,y) {
+    var pointOver = null;
+    _.forEach(points, function(point) {
+        var dx = x - point.x;
+        var dy = y - point.y;
+        var dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist < 10) {
+            pointOver = point;
+        }
+    });
+    return pointOver;
+}
+
+function setupControls() {
+    var hoveredPointCalculated = false;
+    var hoveredPoint = null;
+    var grabbedPoint = null;
+    function getHoveredPoint(event) {
+        if(!hoveredPointCalculated) {
+            hoveredPoint = onPoint(event.offsetX, event.offsetY);
+            hoveredPointCalculated = true;
+        }
+        return hoveredPoint;
+    }
+
+    function updateCursor(canvas,event) {
+        $(canvas).css('cursor',
+                grabbedPoint
+                ? 'grabbing'
+                : getHoveredPoint(event)
+                ? 'grab'
+                : 'auto');
+    }
+
+    function updatePoint(event) {
+        if (event.buttons & 1) {
+            if(grabbedPoint) {
+                grabbedPoint.x = event.offsetX;
+                grabbedPoint.y = event.offsetY;
+                drawCornerPoints();
+                clearCanvas();
+            }
+        }
+    }
+
+    $(canvas).mousemove(function( event ) {
+        hoveredPointCalculated = false;
+        updateCursor(this, event);
+        updatePoint(event);
+    });
+    $(canvas).mousedown(function( event ) {
+        updateCursor(this, event);
+        grabbedPoint = getHoveredPoint(event);
+        updatePoint(event);
+    });
+    $(canvas).mouseup(function( event ) {
+        grabbedPoint = null;
+        updateCursor(this, event);
+    });
 }
 
 function start() {
@@ -67,3 +129,5 @@ function start() {
 }
 
 start();
+
+setupControls();
