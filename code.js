@@ -129,6 +129,23 @@ function start() {
     }
 }
 
+function resizeCanvas() {
+    const width = $('.CanvasArea').width();
+    const height = $(window).height() - $('header').height() - 16;
+    CANVAS_WIDTH = width;
+    CANVAS_HEIGHT = height;
+    ctx.canvas.width = width;
+    ctx.canvas.height = height;
+
+    clearCanvas();
+}
+
+$(window).resize(function() {
+    resizeCanvas();
+});
+
+resizeCanvas();
+
 start();
 
 setupControls();
