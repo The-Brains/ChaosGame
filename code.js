@@ -54,6 +54,7 @@ function clearCanvas() {
     ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     ctx.fill();
+    $('.points').text(pointsCounter);
 }
 
 function onPoint(x,y) {
