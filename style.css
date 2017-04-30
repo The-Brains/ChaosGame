@@ -9,7 +9,11 @@
     width: 100%;
 }
 
+.Data ul {
+    list-style: none;
+}
 
-.mdl-button--large {
+.CanvasArea {
     width: 100%;
+    height: 100%;
 }

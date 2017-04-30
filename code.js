@@ -54,6 +54,7 @@ function clearCanvas() {
     ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     ctx.fill();
+    $('.points').text(pointsCounter);
 }
 
 function onPoint(x,y) {
@@ -127,6 +128,23 @@ function start() {
         );
     }
 }
+
+function resizeCanvas() {
+    const width = $('.CanvasArea').width();
+    const height = $(window).height() - $('header').height() - 16;
+    CANVAS_WIDTH = width;
+    CANVAS_HEIGHT = height;
+    ctx.canvas.width = width;
+    ctx.canvas.height = height;
+
+    clearCanvas();
+}
+
+$(window).resize(function() {
+    resizeCanvas();
+});
+
+resizeCanvas();
 
 start();
 

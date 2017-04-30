@@ -26,7 +26,15 @@
         <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
     </head>
     <body>
-        <div class="mdl-layout mdl-js-layout mdl-layout--fixed-drawer">
+        <div class="mdl-layout mdl-js-layout mdl-layout--fixed-drawer mdl-layout--fixed-header">
+            <header class="mdl-layout__header">
+                <div class="mdl-layout__header-row">
+                    <span class="mdl-layout-title">
+                        Points: <span class="points">0</span>
+                    </span>
+                    <div class="mdl-layout-spacer"></div>
+                </div>
+            </header>
             <div class="mdl-layout__drawer">
                 <span class="mdl-layout-title">Chaos Game</span>
                 <!-- Navigation -->
@@ -77,14 +85,13 @@
                     <div class="Data">
                         <ul>
                             <li>
-                                <p class="mdl-typography--display-1">
-                                    Points: <span class="points">0</span>
-                                </p>
+
                             </li>
                         </ul>
                     </div>
-
-                    <canvas id="canvas" width="800" height="600"></canvas>
+                    <div class="CanvasArea">
+                        <canvas id="canvas"></canvas>
+                    </div>
                 </div>
             </main>
         </div>
