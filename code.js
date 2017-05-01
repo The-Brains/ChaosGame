@@ -4,7 +4,9 @@ var pointsCounter = 0;
 var $canvasArea = $('.CanvasArea');
 var canvasDrawing = $('#canvas_drawing');
 var ctxDrawing = canvasDrawing[0].getContext('2d');
-var canvasUI= $('#canvas_ui');
+var canvasUI = $('#canvas_ui');
+var $statusButtonStart = $('.statusButton-start');
+var $statusButtonStop = $('.statusButton-stop');
 var ctxUI = canvasUI[0].getContext('2d');
 var points = [
     { x: 100, y: 500  },
@@ -13,6 +15,8 @@ var points = [
 ];
 var voyager = { x: 150, y: 300 };
 var thread = null;
+
+var isRunning = false;
 
 var pointsAreUserDefined = false;
 
@@ -115,9 +119,12 @@ function superVoyage() {
 }
 
 function stop() {
-    if (!_.isNil(thread)) {
+    if (!_.isNil(thread) && isRunning) {
         clearInterval(thread);
         thread = null;
+        isRunning = false;
+        $statusButtonStart.removeClass('isHidden');
+        $statusButtonStop.addClass('isHidden');
     }
 }
 
@@ -212,7 +219,7 @@ function setupControls() {
 }
 
 function start() {
-    if (_.isNil(thread)) {
+    if (_.isNil(thread) && !isRunning) {
         wasON = true;
         thread = setInterval(
             function() {
@@ -220,6 +227,9 @@ function start() {
             },
             1
         );
+        isRunning = true;
+        $statusButtonStart.addClass('isHidden');
+        $statusButtonStop.removeClass('isHidden');
     }
 }
 
@@ -247,12 +257,17 @@ $(window).resize(_.debounce(resizeCanvas, 200, {
     maxWait: 1000,
 }));
 
+var wasRunning = null;
+
 $(window).blur(function(){
+    wasRunning = isRunning;
     stop();
 });
 
 $(window).focus(function(){
-    start();
+    if (wasRunning) {
+        start();
+    }
 });
 
 resizeCanvas();
