@@ -54,13 +54,30 @@ function calculateOriginalPoints() {
         },
         {
             x: CANVAS_WIDTH * 10 / 100,
-            y: CANVAS_HEIGHT * 95 / 100,
+            y: CANVAS_HEIGHT * 90 / 100,
         },
         {
             x: CANVAS_WIDTH * 90 / 100,
-            y: CANVAS_HEIGHT * 95 / 100,
+            y: CANVAS_HEIGHT * 90 / 100,
         },
     ];
+}
+
+function repositionPoints() {
+    _.forEach(points, function(point, index) {
+        if (point.x <= 0) {
+            point.x = CANVAS_WIDTH * 10 / 100;
+        }
+        if (point.x >= CANVAS_WIDTH) {
+            point.x = CANVAS_WIDTH * 90 / 100;
+        }
+        if (point.y <= 0) {
+            point.y = CANVAS_HEIGHT * 10 / 100;
+        }
+        if (point.y >= CANVAS_HEIGHT) {
+            point.y = CANVAS_HEIGHT * 90 / 100;
+        }
+    });
 }
 
 function voyage(voyager) {
@@ -176,24 +193,20 @@ function setupControls() {
             }
         }
 
-        if (selectedPoint) {
-            redrawUI(selectedPoint.point);
-        }
-    }, 50, {
-        maxWait: 100,
+        redrawUI(selectedPoint ? selectedPoint.point : null);
+    }, 20, {
+        maxWait: 50,
     }));
 
     $canvasArea.mousedown(function( event ) {
         if (selectedPoint) {
             isMovingPoint = true;
-            console.log(isMovingPoint);
         }
     });
 
     $canvasArea.mouseup(function( event ) {
         if (selectedPoint) {
             isMovingPoint = false;
-            console.log(isMovingPoint);
         }
     });
 }
@@ -223,6 +236,8 @@ function resizeCanvas() {
 
     if (!pointsAreUserDefined) {
         calculateOriginalPoints();
+    } else {
+        repositionPoints();
     }
 
     clearCanvas(true);

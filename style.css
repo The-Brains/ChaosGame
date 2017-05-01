@@ -1,18 +1,3 @@
-.Menu ul {
-    list-style: none;
-    display: flex;
-    width: 100%;
-    padding: 0;
-}
-
-.Menu li {
-    width: 100%;
-}
-
-.Data ul {
-    list-style: none;
-}
-
 .CanvasArea {
     display: block;
     position: relative;
