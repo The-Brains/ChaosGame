@@ -78,6 +78,8 @@ function stop() {
 }
 
 function clearCanvas(uiToo = false) {
+    if(!uiToo) uiToo = false;
+
     pointsCounter = 0
     $('.points').text(pointsCounter);
 
@@ -89,7 +91,7 @@ function clearCanvas(uiToo = false) {
     }
 }
 
-function onPoint(x,y) {
+function onPoint(x, y) {
     var pointOver = null;
     _.forEach(points, function(point) {
         var dx = x - point.x;
@@ -140,11 +142,13 @@ function setupControls() {
         updateCursor(this, event);
         updatePoint(event);
     });
+
     $(canvasUI).mousedown(function( event ) {
         updateCursor(this, event);
         grabbedPoint = getHoveredPoint(event);
         updatePoint(event);
     });
+
     $(canvasUI).mouseup(function( event ) {
         grabbedPoint = null;
         updateCursor(this, event);
