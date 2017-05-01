@@ -1,8 +1,10 @@
 var CANVAS_WIDTH = 800;
 var CANVAS_HEIGHT = 600;
 var pointsCounter = 0;
-var canvas = $('#canvas');
-var ctx = canvas[0].getContext('2d');
+var canvasDrawing = $('#canvas_drawing');
+var ctxDrawing = canvasDrawing[0].getContext('2d');
+var canvasUI= $('#canvas_ui');
+var ctxUI = canvasUI[0].getContext('2d');
 var points = [
     { x: 100, y: 500  },
     { x: 50, y: 150  },
@@ -13,13 +15,21 @@ var thread = null;
 
 var pointsAreUserDefined = false;
 
-function plot(x, y, size, color) {
+function plot(canvas, x, y, size, color) {
     if(!color) color = "#FF0000";
     if(!size) size = 1;
 
-    ctx.fillStyle = color;
-    ctx.fillRect(x,y,size,size);
-    ctx.fill();
+    canvas.fillStyle = color;
+    canvas.fillRect(x - size / 2 , y - size / 2, size, size);
+    canvas.fill();
+}
+
+function plotDrawing(x, y, size, color) {
+    plot(ctxDrawing, x, y, size, color);
+}
+
+function plotUI(x, y, size, color) {
+    plot(ctxUI, x, y, size, color);
 }
 
 function calculateOriginalPoints() {
@@ -43,13 +53,13 @@ function voyage(voyager) {
     var dest = points[Math.random()*3|0];
     voyager.x = (dest.x + voyager.x)/2;
     voyager.y = (dest.y + voyager.y)/2;
-    plot(voyager.x,voyager.y,1,"#0000FF");
+    plotDrawing(voyager.x,voyager.y,1,"#0000FF");
     pointsCounter++;
 }
 
 function drawCornerPoints() {
     _.forEach(points, function(point) {
-        plot(point.x,point.y,5);
+        plotUI(point.x,point.y,5);
     });
 }
 
@@ -57,7 +67,6 @@ function superVoyage() {
     for(var i = 0 ; i < 10 ; i++) {
         voyage(voyager);
     }
-    drawCornerPoints();
     $('.points').text(pointsCounter);
 }
 
@@ -68,12 +77,16 @@ function stop() {
     }
 }
 
-function clearCanvas() {
+function clearCanvas(uiToo = false) {
     pointsCounter = 0
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    ctx.fill();
     $('.points').text(pointsCounter);
+
+    ctxDrawing.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    if (uiToo) {
+        ctxUI.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        drawCornerPoints();
+    }
 }
 
 function onPoint(x,y) {
@@ -101,7 +114,7 @@ function setupControls() {
         return hoveredPoint;
     }
 
-    function updateCursor(canvas,event) {
+    function updateCursor(canvas, event) {
         $(canvas).css('cursor',
                 grabbedPoint
                 ? 'grabbing'
@@ -117,22 +130,22 @@ function setupControls() {
                 grabbedPoint.y = event.offsetY;
                 drawCornerPoints();
                 pointsAreUserDefined = true;
-                clearCanvas();
+                clearCanvas(true);
             }
         }
     }
 
-    $(canvas).mousemove(function( event ) {
+    $(canvasUI).mousemove(function( event ) {
         hoveredPointCalculated = false;
         updateCursor(this, event);
         updatePoint(event);
     });
-    $(canvas).mousedown(function( event ) {
+    $(canvasUI).mousedown(function( event ) {
         updateCursor(this, event);
         grabbedPoint = getHoveredPoint(event);
         updatePoint(event);
     });
-    $(canvas).mouseup(function( event ) {
+    $(canvasUI).mouseup(function( event ) {
         grabbedPoint = null;
         updateCursor(this, event);
     });
@@ -154,13 +167,18 @@ function resizeCanvas() {
     const height = $(window).height() - $('header').height() - 16;
     CANVAS_WIDTH = width;
     CANVAS_HEIGHT = height;
-    ctx.canvas.width = width;
-    ctx.canvas.height = height;
+    $('.CanvasArea').width(width);
+    $('.CanvasArea').height(height);
+    ctxDrawing.canvas.width = width;
+    ctxDrawing.canvas.height = height;
+    ctxUI.canvas.width = width;
+    ctxUI.canvas.height = height;
 
     if (!pointsAreUserDefined) {
         calculateOriginalPoints();
     }
-    clearCanvas();
+
+    clearCanvas(true);
 }
 
 $(window).resize(function() {
@@ -168,9 +186,7 @@ $(window).resize(function() {
 });
 
 resizeCanvas();
-
 calculateOriginalPoints();
-
+drawCornerPoints();
 start();
-
 setupControls();
