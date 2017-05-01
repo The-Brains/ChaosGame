@@ -5,8 +5,7 @@ var $canvasArea = $('.CanvasArea');
 var canvasDrawing = $('#canvas_drawing');
 var ctxDrawing = canvasDrawing[0].getContext('2d');
 var canvasUI = $('#canvas_ui');
-var $statusButtonStart = $('.statusButton-start');
-var $statusButtonStop = $('.statusButton-stop');
+var $statusButton = $('.statusButton');
 var ctxUI = canvasUI[0].getContext('2d');
 var points = [
     { x: 100, y: 500  },
@@ -44,7 +43,6 @@ function drawCircle(ctx, x, y, thickness, size, color) {
 
     ctx.beginPath();
     ctx.arc(x, y, size, 0, 2 * Math.PI, false);
-    // ctx.fillStyle = null;
     ctx.lineWidth = thickness;
     ctx.strokeStyle = color;
     ctx.stroke();
@@ -123,8 +121,9 @@ function stop() {
         clearInterval(thread);
         thread = null;
         isRunning = false;
-        $statusButtonStart.removeClass('isHidden');
-        $statusButtonStop.addClass('isHidden');
+
+        $statusButton.contents().first().replaceWith('Start');
+        $statusButton.click(start);
     }
 }
 
@@ -228,8 +227,9 @@ function start() {
             1
         );
         isRunning = true;
-        $statusButtonStart.addClass('isHidden');
-        $statusButtonStop.removeClass('isHidden');
+
+        $statusButton.contents().first().replaceWith('Stop');
+        $statusButton.click(stop);
     }
 }
 
