@@ -11,6 +11,8 @@ var points = [
 var voyager = { x: 150, y: 300 };
 var thread = null;
 
+var pointsAreUserDefined = false;
+
 function plot(x, y, size, color) {
     if(!color) color = "#FF0000";
     if(!size) size = 1;
@@ -18,6 +20,23 @@ function plot(x, y, size, color) {
     ctx.fillStyle = color;
     ctx.fillRect(x,y,size,size);
     ctx.fill();
+}
+
+function calculateOriginalPoints() {
+    points = [
+        {
+            x: CANVAS_WIDTH / 2,
+            y: CANVAS_HEIGHT * 10 / 100,
+        },
+        {
+            x: CANVAS_WIDTH * 10 / 100,
+            y: CANVAS_HEIGHT * 95 / 100,
+        },
+        {
+            x: CANVAS_WIDTH * 90 / 100,
+            y: CANVAS_HEIGHT * 95 / 100,
+        },
+    ];
 }
 
 function voyage(voyager) {
@@ -97,6 +116,7 @@ function setupControls() {
                 grabbedPoint.x = event.offsetX;
                 grabbedPoint.y = event.offsetY;
                 drawCornerPoints();
+                pointsAreUserDefined = true;
                 clearCanvas();
             }
         }
@@ -137,6 +157,9 @@ function resizeCanvas() {
     ctx.canvas.width = width;
     ctx.canvas.height = height;
 
+    if (!pointsAreUserDefined) {
+        calculateOriginalPoints();
+    }
     clearCanvas();
 }
 
@@ -145,6 +168,8 @@ $(window).resize(function() {
 });
 
 resizeCanvas();
+
+calculateOriginalPoints();
 
 start();
 
