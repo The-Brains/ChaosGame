@@ -1,6 +1,7 @@
 var CANVAS_WIDTH = 800;
 var CANVAS_HEIGHT = 600;
 var pointsCounter = 0;
+var $canvasArea = $('.CanvasArea');
 var canvasDrawing = $('#canvas_drawing');
 var ctxDrawing = canvasDrawing[0].getContext('2d');
 var canvasUI= $('#canvas_ui');
@@ -19,6 +20,7 @@ function plot(canvas, x, y, size, color) {
     if(!color) color = "#FF0000";
     if(!size) size = 1;
 
+    canvas.beginPath();
     canvas.fillStyle = color;
     canvas.fillRect(x - size / 2 , y - size / 2, size, size);
     canvas.fill();
@@ -30,6 +32,18 @@ function plotDrawing(x, y, size, color) {
 
 function plotUI(x, y, size, color) {
     plot(ctxUI, x, y, size, color);
+}
+
+function drawCircle(ctx, x, y, thickness, size, color) {
+    if(!color) color = "#FF0000";
+    if(!size) size = 1;
+
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, 2 * Math.PI, false);
+    // ctx.fillStyle = null;
+    ctx.lineWidth = thickness;
+    ctx.strokeStyle = color;
+    ctx.stroke();
 }
 
 function calculateOriginalPoints() {
@@ -57,10 +71,23 @@ function voyage(voyager) {
     pointsCounter++;
 }
 
-function drawCornerPoints() {
+function drawCornerPoints(selectedPoint) {
+    if (!selectedPoint) selectedPoint = null;
+
     _.forEach(points, function(point) {
-        plotUI(point.x,point.y,5);
+        plotUI(point.x, point.y, 6);
     });
+
+    if (selectedPoint) {
+        drawCircle(
+            ctxUI,
+            selectedPoint.x,
+            selectedPoint.y,
+            2,
+            16,
+            '#000000'
+        );
+    }
 }
 
 function superVoyage() {
@@ -77,6 +104,11 @@ function stop() {
     }
 }
 
+function redrawUI(selectedPoint) {
+    ctxUI.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    drawCornerPoints(selectedPoint);
+}
+
 function clearCanvas(uiToo = false) {
     if(!uiToo) uiToo = false;
 
@@ -86,8 +118,7 @@ function clearCanvas(uiToo = false) {
     ctxDrawing.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
     if (uiToo) {
-        ctxUI.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-        drawCornerPoints();
+        redrawUI();
     }
 }
 
@@ -104,59 +135,72 @@ function onPoint(x, y) {
     return pointOver;
 }
 
+function distance(pointA, pointB) {
+    const x = pointA.x - pointB.x;
+    const y = pointA.y - pointB.y;
+    return Math.sqrt( x * x + y * y )
+}
+
 function setupControls() {
-    var hoveredPointCalculated = false;
-    var hoveredPoint = null;
-    var grabbedPoint = null;
-    function getHoveredPoint(event) {
-        if(!hoveredPointCalculated) {
-            hoveredPoint = onPoint(event.offsetX, event.offsetY);
-            hoveredPointCalculated = true;
-        }
-        return hoveredPoint;
-    }
+    var selectedPoint = null;
+    var isMovingPoint = false;
 
-    function updateCursor(canvas, event) {
-        $(canvas).css('cursor',
-                grabbedPoint
-                ? 'grabbing'
-                : getHoveredPoint(event)
-                ? 'grab'
-                : 'auto');
-    }
+    $canvasArea.mousemove(_.debounce(function(event) {
+        const mouseX = event.offsetX;
+        const mouseY = event.offsetY;
 
-    function updatePoint(event) {
-        if (event.buttons & 1) {
-            if(grabbedPoint) {
-                grabbedPoint.x = event.offsetX;
-                grabbedPoint.y = event.offsetY;
-                drawCornerPoints();
-                pointsAreUserDefined = true;
-                clearCanvas(true);
+        if (isMovingPoint) {
+            points[selectedPoint.i].x = mouseX;
+            points[selectedPoint.i].y = mouseY;
+            pointsAreUserDefined = true;
+        } else {
+            selectedPoint = null;
+            $canvasArea.removeClass('isInteracting');
+
+            const distancesToPoints = _.map(points, function(point, index) {
+                return {
+                    point: point,
+                    d: distance({
+                        x: mouseX,
+                        y: mouseY,
+                    }, point),
+                    i: index,
+                };
+            });
+            const closestPoint = _.minBy(distancesToPoints, 'd');
+
+            if (closestPoint.d <= 16) {
+                // one point is close enough to be moved
+                selectedPoint = closestPoint;
+                $canvasArea.addClass('isInteracting');
             }
         }
-    }
 
-    $(canvasUI).mousemove(function( event ) {
-        hoveredPointCalculated = false;
-        updateCursor(this, event);
-        updatePoint(event);
+        if (selectedPoint) {
+            redrawUI(selectedPoint.point);
+        }
+    }, 50, {
+        maxWait: 100,
+    }));
+
+    $canvasArea.mousedown(function( event ) {
+        if (selectedPoint) {
+            isMovingPoint = true;
+            console.log(isMovingPoint);
+        }
     });
 
-    $(canvasUI).mousedown(function( event ) {
-        updateCursor(this, event);
-        grabbedPoint = getHoveredPoint(event);
-        updatePoint(event);
-    });
-
-    $(canvasUI).mouseup(function( event ) {
-        grabbedPoint = null;
-        updateCursor(this, event);
+    $canvasArea.mouseup(function( event ) {
+        if (selectedPoint) {
+            isMovingPoint = false;
+            console.log(isMovingPoint);
+        }
     });
 }
 
 function start() {
     if (_.isNil(thread)) {
+        wasON = true;
         thread = setInterval(
             function() {
                 superVoyage();
@@ -171,7 +215,6 @@ function resizeCanvas() {
     const height = $(window).height() - $('header').height() - 16;
     CANVAS_WIDTH = width;
     CANVAS_HEIGHT = height;
-    $('.CanvasArea').width(width);
     $('.CanvasArea').height(height);
     ctxDrawing.canvas.width = width;
     ctxDrawing.canvas.height = height;
@@ -185,8 +228,16 @@ function resizeCanvas() {
     clearCanvas(true);
 }
 
-$(window).resize(function() {
-    resizeCanvas();
+$(window).resize(_.debounce(resizeCanvas, 200, {
+    maxWait: 1000,
+}));
+
+$(window).blur(function(){
+    stop();
+});
+
+$(window).focus(function(){
+    start();
 });
 
 resizeCanvas();
