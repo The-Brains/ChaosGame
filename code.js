@@ -137,7 +137,7 @@ function redrawUI(selectedPoint) {
     drawCornerPoints(selectedPoint);
 }
 
-function clearCanvas(uiToo = false) {
+function clearCanvas(uiToo) {
     if(!uiToo) uiToo = false;
 
     pointsCounter = 0
@@ -207,7 +207,7 @@ function setupControls() {
         }
     }
 
-    $canvasArea.mousemove(_.debounce(function(event) {
+    $canvasArea.mousemove(function(event) {
         const mouseX = event.offsetX;
         const mouseY = event.offsetY;
 
@@ -216,9 +216,7 @@ function setupControls() {
         } else {
             setupSelectedPoint(mouseX, mouseY);
         }
-    }, 20, {
-        maxWait: 50,
-    }));
+    });
 
     $canvasArea.mousedown(function( event ) {
         if (selectedPoint) {
