@@ -15,7 +15,7 @@ var points = [
 var voyager = { x: 0, y: 0 };
 var thread = null;
 var pointDrawnPerIteration = 100;
-
+var pointSelectionRadius = 24;
 var isRunning = false;
 
 var pointsAreUserDefined = false;
@@ -104,7 +104,7 @@ function drawCornerPoints(selectedPoint) {
             selectedPoint.x,
             selectedPoint.y,
             2,
-            16,
+            pointSelectionRadius,
             '#000000'
         );
     }
@@ -173,38 +173,49 @@ function setupControls() {
     var selectedPoint = null;
     var isMovingPoint = false;
 
+    function setupSelectedPoint(mouseX, mouseY) {
+        selectedPoint = null;
+        $canvasArea.removeClass('isInteracting');
+
+        const distancesToPoints = _.map(points, function(point, index) {
+            return {
+                point: point,
+                d: distance({
+                    x: mouseX,
+                    y: mouseY,
+                }, point),
+                i: index,
+            };
+        });
+        const closestPoint = _.minBy(distancesToPoints, 'd');
+
+        if (closestPoint.d <= pointSelectionRadius) {
+            // one point is close enough to be moved
+            selectedPoint = closestPoint;
+            $canvasArea.addClass('isInteracting');
+        }
+
+        redrawUI(selectedPoint ? selectedPoint.point : null);
+    }
+
+    function moveSelectedPoint(mouseX, mouseY) {
+        if (isMovingPoint && selectedPoint) {
+            points[selectedPoint.i].x = mouseX;
+            points[selectedPoint.i].y = mouseY;
+            pointsAreUserDefined = true;
+            redrawUI(selectedPoint.point);
+        }
+    }
+
     $canvasArea.mousemove(_.debounce(function(event) {
         const mouseX = event.offsetX;
         const mouseY = event.offsetY;
 
-        if (isMovingPoint) {
-            points[selectedPoint.i].x = mouseX;
-            points[selectedPoint.i].y = mouseY;
-            pointsAreUserDefined = true;
+        if (isMovingPoint && selectedPoint) {
+            moveSelectedPoint(mouseX, mouseY);
         } else {
-            selectedPoint = null;
-            $canvasArea.removeClass('isInteracting');
-
-            const distancesToPoints = _.map(points, function(point, index) {
-                return {
-                    point: point,
-                    d: distance({
-                        x: mouseX,
-                        y: mouseY,
-                    }, point),
-                    i: index,
-                };
-            });
-            const closestPoint = _.minBy(distancesToPoints, 'd');
-
-            if (closestPoint.d <= 16) {
-                // one point is close enough to be moved
-                selectedPoint = closestPoint;
-                $canvasArea.addClass('isInteracting');
-            }
+            setupSelectedPoint(mouseX, mouseY);
         }
-
-        redrawUI(selectedPoint ? selectedPoint.point : null);
     }, 20, {
         maxWait: 50,
     }));
@@ -219,6 +230,38 @@ function setupControls() {
         if (selectedPoint) {
             isMovingPoint = false;
         }
+    });
+
+    $canvasArea.on('touchstart', function(event) {
+        event.preventDefault();
+        var rect = event.target.getBoundingClientRect();
+        var touchX = event.targetTouches[0].pageX - rect.left;
+        var touchY = event.targetTouches[0].pageY - rect.top;
+
+        setupSelectedPoint(touchX, touchY);
+
+        if (selectedPoint) {
+            isMovingPoint = true;
+        }
+        return false;
+    });
+
+    $canvasArea.on('touchmove', function(event) {
+        event.preventDefault();
+        var rect = event.target.getBoundingClientRect();
+        var touchX = event.targetTouches[0].pageX - rect.left;
+        var touchY = event.targetTouches[0].pageY - rect.top;
+
+        moveSelectedPoint(touchX, touchY);
+        return false;
+    });
+
+    $canvasArea.on('touchend', function(event) {
+        event.preventDefault();
+        isMovingPoint = false;
+        selectedPoint = null;
+        redrawUI(null);
+        return false;
     });
 }
 
