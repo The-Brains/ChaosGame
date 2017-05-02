@@ -1,19 +1,32 @@
-.Menu ul {
-    list-style: none;
+.text-centered {
+    text-align: center;
+}
+
+.statusButton.isHidden {
+    display: none;
+}
+
+.SpeedSlider {
     display: flex;
+    align-items: center;
     width: 100%;
-    padding: 0;
-}
-
-.Menu li {
-    width: 100%;
-}
-
-.Data ul {
-    list-style: none;
+    margin-left: 10px;
 }
 
 .CanvasArea {
+    display: block;
+    position: relative;
     width: 100%;
     height: 100%;
+}
+
+.CanvasArea canvas {
+    background-color: transparent;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.CanvasArea.isInteracting {
+    cursor: pointer;
 }

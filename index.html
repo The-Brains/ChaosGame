@@ -28,10 +28,10 @@
         <div class="mdl-layout mdl-js-layout mdl-layout--fixed-drawer mdl-layout--fixed-header">
             <header class="mdl-layout__header">
                 <div class="mdl-layout__header-row">
+                    <div class="mdl-layout-spacer"></div>
                     <span class="mdl-layout-title">
                         Points: <span class="points">0</span>
                     </span>
-                    <div class="mdl-layout-spacer"></div>
                 </div>
             </header>
             <div class="mdl-layout__drawer">
@@ -40,29 +40,16 @@
                 <nav class="mdl-navigation">
                     <button
                         class="
+                            statusButton
                             mdl-button
                             mdl-js-button
                             mdl-js-ripple-effect
                             mdl-button--large
                             mdl-button--accent
                             mdl-button--raised
-                        "
-                        onclick="start();">
+                        ">
+                        TEST TEST
 
-                        Start
-                    </button>
-                    <button
-                        class="
-                            mdl-button
-                            mdl-js-button
-                            mdl-js-ripple-effect
-                            mdl-button--large
-                            mdl-button--accent
-                            mdl-button--raised
-                        "
-                        onclick="stop();">
-
-                        Stop
                     </button>
                     <button
                         class="
@@ -77,12 +64,31 @@
 
                         Clear
                     </button>
+                    <h5 class="text-centered">Speed</h5>
+                    <p class="SpeedSlider">
+                        <i class="material-icons">remove</i>
+                        <input
+                            class="
+                                mdl-slider
+                                mdl-js-slider
+                            "
+                            type="range"
+                            min="5"
+                            max="500"
+                            value="100"
+                            step="5"
+                            onchange="updateSpeedThread(this.value);"
+                            oninput="updateSpeedThread(this.value);"
+                        />
+                        <i class="material-icons">add</i>
+                    </p>
                 </nav>
             </div>
             <main class="mdl-layout__content">
                 <div class="page-content">
                     <div class="CanvasArea">
-                        <canvas id="canvas"></canvas>
+                        <canvas id="canvas_ui"></canvas>
+                        <canvas id="canvas_drawing"></canvas>
                     </div>
                 </div>
             </main>
