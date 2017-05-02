@@ -64,6 +64,24 @@
 
                         Clear
                     </button>
+                    <h5 class="text-centered">Speed</h5>
+                    <p class="SpeedSlider">
+                        <i class="material-icons">remove</i>
+                        <input
+                            class="
+                                mdl-slider
+                                mdl-js-slider
+                            "
+                            type="range"
+                            min="5"
+                            max="500"
+                            value="100"
+                            step="5"
+                            onchange="updateSpeedThread(this.value);"
+                            oninput="updateSpeedThread(this.value);"
+                        />
+                        <i class="material-icons">add</i>
+                    </p>
                 </nav>
             </div>
             <main class="mdl-layout__content">

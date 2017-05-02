@@ -12,8 +12,9 @@ var points = [
     { x: 50, y: 150  },
     { x: 500, y: 200  },
 ];
-var voyager = { x: 150, y: 300 };
+var voyager = { x: 0, y: 0 };
 var thread = null;
+var pointDrawnPerIteration = 100;
 
 var isRunning = false;
 
@@ -109,8 +110,12 @@ function drawCornerPoints(selectedPoint) {
     }
 }
 
+function updateSpeedThread(newValue) {
+    pointDrawnPerIteration = newValue;
+}
+
 function superVoyage() {
-    for(var i = 0 ; i < 10 ; i++) {
+    for(var i = 0 ; i < pointDrawnPerIteration ; i++) {
         voyage(voyager);
     }
     $('.points').text(pointsCounter);
@@ -224,7 +229,7 @@ function start() {
             function() {
                 superVoyage();
             },
-            1
+            100
         );
         isRunning = true;
 

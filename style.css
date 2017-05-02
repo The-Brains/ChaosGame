@@ -1,5 +1,16 @@
+.text-centered {
+    text-align: center;
+}
+
 .statusButton.isHidden {
     display: none;
+}
+
+.SpeedSlider {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-left: 10px;
 }
 
 .CanvasArea {
