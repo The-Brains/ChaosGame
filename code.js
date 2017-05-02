@@ -1,62 +1,156 @@
 var CANVAS_WIDTH = 800;
 var CANVAS_HEIGHT = 600;
 var pointsCounter = 0;
-var canvas = $('#canvas');
-var ctx = canvas[0].getContext('2d');
+var $canvasArea = $('.CanvasArea');
+var canvasDrawing = $('#canvas_drawing');
+var ctxDrawing = canvasDrawing[0].getContext('2d');
+var canvasUI = $('#canvas_ui');
+var $statusButton = $('.statusButton');
+var ctxUI = canvasUI[0].getContext('2d');
 var points = [
     { x: 100, y: 500  },
     { x: 50, y: 150  },
     { x: 500, y: 200  },
 ];
-var voyager = { x: 150, y: 300 };
+var voyager = { x: 0, y: 0 };
 var thread = null;
+var pointDrawnPerIteration = 100;
+var pointSelectionRadius = 24;
+var isRunning = false;
 
-function plot(x, y, size, color) {
+var pointsAreUserDefined = false;
+
+function plot(canvas, x, y, size, color) {
     if(!color) color = "#FF0000";
     if(!size) size = 1;
 
-    ctx.fillStyle = color;
-    ctx.fillRect(x,y,size,size);
-    ctx.fill();
+    canvas.beginPath();
+    canvas.fillStyle = color;
+    canvas.fillRect(x - size / 2 , y - size / 2, size, size);
+    canvas.fill();
+}
+
+function plotDrawing(x, y, size, color) {
+    plot(ctxDrawing, x, y, size, color);
+}
+
+function plotUI(x, y, size, color) {
+    plot(ctxUI, x, y, size, color);
+}
+
+function drawCircle(ctx, x, y, thickness, size, color) {
+    if(!color) color = "#FF0000";
+    if(!size) size = 1;
+
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, 2 * Math.PI, false);
+    ctx.lineWidth = thickness;
+    ctx.strokeStyle = color;
+    ctx.stroke();
+}
+
+function calculateOriginalPoints() {
+    points = [
+        {
+            x: CANVAS_WIDTH / 2,
+            y: CANVAS_HEIGHT * 10 / 100,
+        },
+        {
+            x: CANVAS_WIDTH * 10 / 100,
+            y: CANVAS_HEIGHT * 90 / 100,
+        },
+        {
+            x: CANVAS_WIDTH * 90 / 100,
+            y: CANVAS_HEIGHT * 90 / 100,
+        },
+    ];
+}
+
+function repositionPoints() {
+    _.forEach(points, function(point, index) {
+        if (point.x <= 0) {
+            point.x = CANVAS_WIDTH * 10 / 100;
+        }
+        if (point.x >= CANVAS_WIDTH) {
+            point.x = CANVAS_WIDTH * 90 / 100;
+        }
+        if (point.y <= 0) {
+            point.y = CANVAS_HEIGHT * 10 / 100;
+        }
+        if (point.y >= CANVAS_HEIGHT) {
+            point.y = CANVAS_HEIGHT * 90 / 100;
+        }
+    });
 }
 
 function voyage(voyager) {
     var dest = points[Math.random()*3|0];
     voyager.x = (dest.x + voyager.x)/2;
     voyager.y = (dest.y + voyager.y)/2;
-    plot(voyager.x,voyager.y,1,"#0000FF");
+    plotDrawing(voyager.x,voyager.y,1,"#0000FF");
     pointsCounter++;
 }
 
-function drawCornerPoints() {
+function drawCornerPoints(selectedPoint) {
+    if (!selectedPoint) selectedPoint = null;
+
     _.forEach(points, function(point) {
-        plot(point.x,point.y,5);
+        plotUI(point.x, point.y, 6);
     });
+
+    if (selectedPoint) {
+        drawCircle(
+            ctxUI,
+            selectedPoint.x,
+            selectedPoint.y,
+            2,
+            pointSelectionRadius,
+            '#000000'
+        );
+    }
+}
+
+function updateSpeedThread(newValue) {
+    pointDrawnPerIteration = newValue;
 }
 
 function superVoyage() {
-    for(var i = 0 ; i < 10 ; i++) {
+    for(var i = 0 ; i < pointDrawnPerIteration ; i++) {
         voyage(voyager);
     }
-    drawCornerPoints();
     $('.points').text(pointsCounter);
 }
 
 function stop() {
-    if (!_.isNil(thread)) {
+    if (!_.isNil(thread) && isRunning) {
         clearInterval(thread);
         thread = null;
+        isRunning = false;
+
+        $statusButton.contents().first().replaceWith('Start');
+        $statusButton.click(start);
     }
 }
 
-function clearCanvas() {
-    pointsCounter = 0
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    ctx.fill();
+function redrawUI(selectedPoint) {
+    ctxUI.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    drawCornerPoints(selectedPoint);
 }
 
-function onPoint(x,y) {
+function clearCanvas(uiToo = false) {
+    if(!uiToo) uiToo = false;
+
+    pointsCounter = 0
+    $('.points').text(pointsCounter);
+
+    ctxDrawing.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    if (uiToo) {
+        redrawUI();
+    }
+}
+
+function onPoint(x, y) {
     var pointOver = null;
     _.forEach(points, function(point) {
         var dx = x - point.x;
@@ -69,65 +163,163 @@ function onPoint(x,y) {
     return pointOver;
 }
 
+function distance(pointA, pointB) {
+    const x = pointA.x - pointB.x;
+    const y = pointA.y - pointB.y;
+    return Math.sqrt( x * x + y * y )
+}
+
 function setupControls() {
-    var hoveredPointCalculated = false;
-    var hoveredPoint = null;
-    var grabbedPoint = null;
-    function getHoveredPoint(event) {
-        if(!hoveredPointCalculated) {
-            hoveredPoint = onPoint(event.offsetX, event.offsetY);
-            hoveredPointCalculated = true;
+    var selectedPoint = null;
+    var isMovingPoint = false;
+
+    function setupSelectedPoint(mouseX, mouseY) {
+        selectedPoint = null;
+        $canvasArea.removeClass('isInteracting');
+
+        const distancesToPoints = _.map(points, function(point, index) {
+            return {
+                point: point,
+                d: distance({
+                    x: mouseX,
+                    y: mouseY,
+                }, point),
+                i: index,
+            };
+        });
+        const closestPoint = _.minBy(distancesToPoints, 'd');
+
+        if (closestPoint.d <= pointSelectionRadius) {
+            // one point is close enough to be moved
+            selectedPoint = closestPoint;
+            $canvasArea.addClass('isInteracting');
         }
-        return hoveredPoint;
+
+        redrawUI(selectedPoint ? selectedPoint.point : null);
     }
 
-    function updateCursor(canvas,event) {
-        $(canvas).css('cursor',
-                grabbedPoint
-                ? 'grabbing'
-                : getHoveredPoint(event)
-                ? 'grab'
-                : 'auto');
-    }
-
-    function updatePoint(event) {
-        if (event.buttons & 1) {
-            if(grabbedPoint) {
-                grabbedPoint.x = event.offsetX;
-                grabbedPoint.y = event.offsetY;
-                drawCornerPoints();
-                clearCanvas();
-            }
+    function moveSelectedPoint(mouseX, mouseY) {
+        if (isMovingPoint && selectedPoint) {
+            points[selectedPoint.i].x = mouseX;
+            points[selectedPoint.i].y = mouseY;
+            pointsAreUserDefined = true;
+            redrawUI(selectedPoint.point);
         }
     }
 
-    $(canvas).mousemove(function( event ) {
-        hoveredPointCalculated = false;
-        updateCursor(this, event);
-        updatePoint(event);
+    $canvasArea.mousemove(_.debounce(function(event) {
+        const mouseX = event.offsetX;
+        const mouseY = event.offsetY;
+
+        if (isMovingPoint && selectedPoint) {
+            moveSelectedPoint(mouseX, mouseY);
+        } else {
+            setupSelectedPoint(mouseX, mouseY);
+        }
+    }, 20, {
+        maxWait: 50,
+    }));
+
+    $canvasArea.mousedown(function( event ) {
+        if (selectedPoint) {
+            isMovingPoint = true;
+        }
     });
-    $(canvas).mousedown(function( event ) {
-        updateCursor(this, event);
-        grabbedPoint = getHoveredPoint(event);
-        updatePoint(event);
+
+    $canvasArea.mouseup(function( event ) {
+        if (selectedPoint) {
+            isMovingPoint = false;
+        }
     });
-    $(canvas).mouseup(function( event ) {
-        grabbedPoint = null;
-        updateCursor(this, event);
+
+    $canvasArea.on('touchstart', function(event) {
+        event.preventDefault();
+        var rect = event.target.getBoundingClientRect();
+        var touchX = event.targetTouches[0].pageX - rect.left;
+        var touchY = event.targetTouches[0].pageY - rect.top;
+
+        setupSelectedPoint(touchX, touchY);
+
+        if (selectedPoint) {
+            isMovingPoint = true;
+        }
+        return false;
+    });
+
+    $canvasArea.on('touchmove', function(event) {
+        event.preventDefault();
+        var rect = event.target.getBoundingClientRect();
+        var touchX = event.targetTouches[0].pageX - rect.left;
+        var touchY = event.targetTouches[0].pageY - rect.top;
+
+        moveSelectedPoint(touchX, touchY);
+        return false;
+    });
+
+    $canvasArea.on('touchend', function(event) {
+        event.preventDefault();
+        isMovingPoint = false;
+        selectedPoint = null;
+        redrawUI(null);
+        return false;
     });
 }
 
 function start() {
-    if (_.isNil(thread)) {
+    if (_.isNil(thread) && !isRunning) {
+        wasON = true;
         thread = setInterval(
             function() {
                 superVoyage();
             },
-            1
+            100
         );
+        isRunning = true;
+
+        $statusButton.contents().first().replaceWith('Stop');
+        $statusButton.click(stop);
     }
 }
 
-start();
+function resizeCanvas() {
+    const width = $('.CanvasArea').width();
+    const height = $(window).height() - $('header').height() - 16;
+    CANVAS_WIDTH = width;
+    CANVAS_HEIGHT = height;
+    $('.CanvasArea').height(height);
+    ctxDrawing.canvas.width = width;
+    ctxDrawing.canvas.height = height;
+    ctxUI.canvas.width = width;
+    ctxUI.canvas.height = height;
 
+    if (!pointsAreUserDefined) {
+        calculateOriginalPoints();
+    } else {
+        repositionPoints();
+    }
+
+    clearCanvas(true);
+}
+
+$(window).resize(_.debounce(resizeCanvas, 200, {
+    maxWait: 1000,
+}));
+
+var wasRunning = null;
+
+$(window).blur(function(){
+    wasRunning = isRunning;
+    stop();
+});
+
+$(window).focus(function(){
+    if (wasRunning) {
+        start();
+    }
+});
+
+resizeCanvas();
+calculateOriginalPoints();
+drawCornerPoints();
+start();
 setupControls();
