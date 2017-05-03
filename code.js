@@ -133,7 +133,6 @@ function stop() {
 }
 
 function redrawUI(selectedPoint) {
-    console.log('redraw UI');
     ctxUI.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     drawCornerPoints(selectedPoint);
 }
