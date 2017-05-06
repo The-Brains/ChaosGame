@@ -164,8 +164,8 @@ function onPoint(x, y) {
 }
 
 function distance(pointA, pointB) {
-    const x = pointA.x - pointB.x;
-    const y = pointA.y - pointB.y;
+    var x = pointA.x - pointB.x;
+    var y = pointA.y - pointB.y;
     return Math.sqrt( x * x + y * y )
 }
 
@@ -177,7 +177,7 @@ function setupControls() {
         selectedPoint = null;
         $canvasArea.removeClass('isInteracting');
 
-        const distancesToPoints = _.map(points, function(point, index) {
+        var distancesToPoints = _.map(points, function(point, index) {
             return {
                 point: point,
                 d: distance({
@@ -187,7 +187,7 @@ function setupControls() {
                 i: index,
             };
         });
-        const closestPoint = _.minBy(distancesToPoints, 'd');
+        var closestPoint = _.minBy(distancesToPoints, 'd');
 
         if (closestPoint.d <= pointSelectionRadius) {
             // one point is close enough to be moved
@@ -207,33 +207,50 @@ function setupControls() {
         }
     }
 
-    $canvasArea.mousemove(_.debounce(function(event) {
-        const mouseX = event.offsetX;
-        const mouseY = event.offsetY;
+    var mouseoverFunction = _.debounce(function(event) {
+        event.preventDefault();
+
+        if(event.offsetX === 0 || event.offsetY === 0) {
+            var targetOffset = $(event.target).offset();
+            event.offsetX = event.pageX - targetOffset.left;
+            event.offsetY = event.pageY - targetOffset.top;
+        }
+
+        var mouseX = event.offsetX;
+        var mouseY = event.offsetY;
 
         if (isMovingPoint && selectedPoint) {
             moveSelectedPoint(mouseX, mouseY);
         } else {
             setupSelectedPoint(mouseX, mouseY);
         }
+
+        return false;
     }, 20, {
         maxWait: 50,
-    }));
+    });
 
-    $canvasArea.mousedown(function( event ) {
+    $canvasArea.mousemove(mouseoverFunction);
+
+    $canvasArea.mousedown(function(event) {
+        event.preventDefault();
         if (selectedPoint) {
             isMovingPoint = true;
         }
+        return false;
     });
 
-    $canvasArea.mouseup(function( event ) {
+    $canvasArea.mouseup(function(event) {
+        event.preventDefault();
         if (selectedPoint) {
             isMovingPoint = false;
         }
+        return false;
     });
 
     $canvasArea.on('touchstart', function(event) {
         event.preventDefault();
+
         var rect = event.target.getBoundingClientRect();
         var touchX = event.targetTouches[0].pageX - rect.left;
         var touchY = event.targetTouches[0].pageY - rect.top;
@@ -282,8 +299,8 @@ function start() {
 }
 
 function resizeCanvas() {
-    const width = $('.CanvasArea').width();
-    const height = $(window).height() - $('header').height() - 16;
+    var width = $('.CanvasArea').width();
+    var height = $(window).height() - $('header').height() - 16;
     CANVAS_WIDTH = width;
     CANVAS_HEIGHT = height;
     $('.CanvasArea').height(height);
