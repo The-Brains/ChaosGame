@@ -137,7 +137,7 @@ function redrawUI(selectedPoint) {
     drawCornerPoints(selectedPoint);
 }
 
-function clearCanvas(uiToo = false) {
+function clearCanvas(uiToo) {
     if(!uiToo) uiToo = false;
 
     pointsCounter = 0
