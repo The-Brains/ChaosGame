@@ -207,7 +207,7 @@ function setupControls() {
         }
     }
 
-    $canvasArea.mousemove(function(event) {
+    $canvasArea.mousemove(_.debounce(function(event) {
         const mouseX = event.offsetX;
         const mouseY = event.offsetY;
 
@@ -216,7 +216,9 @@ function setupControls() {
         } else {
             setupSelectedPoint(mouseX, mouseY);
         }
-    });
+    }, 20, {
+        maxWait: 50,
+    }));
 
     $canvasArea.mousedown(function( event ) {
         if (selectedPoint) {
