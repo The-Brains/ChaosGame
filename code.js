@@ -84,7 +84,7 @@ function repositionPoints() {
 }
 
 function voyage(voyager) {
-    var dest = points[Math.random()*3|0];
+    var dest = points[Math.random()*points.length|0];
     voyager.x = (dest.x + voyager.x)/2;
     voyager.y = (dest.y + voyager.y)/2;
     plotDrawing(voyager.x,voyager.y,1,"#0000FF");
@@ -296,6 +296,21 @@ function start() {
         $statusButton.contents().first().replaceWith('Stop');
         $statusButton.click(stop);
     }
+}
+
+function addPoint() {
+    stop();
+    points.push({
+        x: CANVAS_WIDTH / 2,
+        y: CANVAS_HEIGHT / 2,
+    });
+    redrawUI();
+}
+
+function resetPoints() {
+    stop();
+    calculateOriginalPoints();
+    redrawUI();
 }
 
 function resizeCanvas() {
